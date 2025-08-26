@@ -2,29 +2,42 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { getCart, updateCartItem, removeFromCart, getCartTotal, CartItem } from '@/lib/cart'
 import { Minus, Plus, Trash2, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { createClient } from '@/lib/supabase/client'
 
 export default function Cart() {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [total, setTotal] = useState(0)
+  const router = useRouter()
+  const supabase = createClient()
 
   useEffect(() => {
     updateCartState()
-    
     const handleCartUpdate = () => updateCartState()
     window.addEventListener('cart-updated', handleCartUpdate)
-    
     return () => window.removeEventListener('cart-updated', handleCartUpdate)
   }, [])
 
   const updateCartState = () => {
     setCartItems(getCart())
     setTotal(getCartTotal())
+  }
+
+  const handleProceedToCheckout = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      sessionStorage.setItem('redirectAfterLogin', '/order/checkout')
+      toast('Please sign in to proceed to checkout.', { icon: "🔒" })
+      router.push('/auth/signin?next=/order/checkout')
+    } else {
+      router.push('/order/checkout')
+    }
   }
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
@@ -168,11 +181,12 @@ export default function Cart() {
                   <span className="text-rose-600">${total.toFixed(2)}</span>
                 </div>
                 
-                <Link href="/order/checkout" className="block">
-                  <Button className="w-full bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white py-3">
+               
+                  <Button className="w-full bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-white py-3"
+                  onClick={handleProceedToCheckout}>
                     Proceed to Checkout
                   </Button>
-                </Link>
+                
                 
                 <Link href="/menu" className="block">
                   <Button variant="outline" className="w-full border-rose-300 text-rose-700 hover:bg-rose-50">

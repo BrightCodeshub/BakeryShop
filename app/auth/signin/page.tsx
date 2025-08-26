@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter ,useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff } from 'lucide-react'
 
@@ -17,6 +17,7 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -32,8 +33,11 @@ export default function SignIn() {
       if (error) {
         toast.error(error.message)
       } else {
-        toast.success('Signed in successfully!')
-        router.push('/dashboard/customer')
+         toast.success('Signed in successfully!')
+        // Redirect to intended page or default dashboard
+        const nextPage = searchParams.get('next') || sessionStorage.getItem('redirectAfterLogin') || '/dashboard/customer'
+        sessionStorage.removeItem('redirectAfterLogin')
+        router.replace(nextPage)
       }
     } catch (error) {
       toast.error('An unexpected error occurred')

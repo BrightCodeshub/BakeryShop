@@ -21,18 +21,23 @@ export default function Checkout() {
   const router = useRouter()
   const supabase = createClient()
 
-  useEffect(() => {
-    setCartItems(getCart())
-    setTotal(getCartTotal())
-    
-    // Get user if signed in
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-      if (user?.email) {
-        setEmail(user.email)
+ useEffect(() => {
+    async function checkAuthAndInit() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        sessionStorage.setItem('redirectAfterLogin', '/order/checkout')
+        toast('Sign in to proceed to checkout.', { icon: "🔒" })
+        router.replace('/auth/signin?next=/order/checkout')
+        return
       }
-    })
-  }, [])
+      
+      setUser(user)
+      setEmail(user.email || '')
+      setCartItems(getCart())
+      setTotal(getCartTotal())
+    }
+    checkAuthAndInit()
+  }, [router, supabase])
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault()
