@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY!, {
+const stripe = new Stripe(process.env.STRIPE_WEBHOOK_SECRET!, {
   apiVersion: '2025-07-30.basil',
 })
 
