@@ -20,6 +20,34 @@ export default function SignIn() {
   const searchParams = useSearchParams()
   const supabase = createClient()
 
+  const redirectByRole = async () => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      toast.error('Error fetching user info.')
+      return '/dashboard/customer' // fallback
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      return '/dashboard/customer'
+    }
+
+    switch (profile.role) {
+      case 'manager':
+        return '/dashboard/manager'
+      case 'employee':
+        return '/dashboard/customer' // or specific employee dashboard if any
+      case 'customer':
+      default:
+        return '/dashboard/customer'
+    }
+  }
+  
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -35,9 +63,17 @@ export default function SignIn() {
       } else {
          toast.success('Signed in successfully!')
         // Redirect to intended page or default dashboard
-        const nextPage = searchParams.get('next') || sessionStorage.getItem('redirectAfterLogin') || '/dashboard/customer'
+      
+        const nextPage = searchParams.get('next') || sessionStorage.getItem('redirectAfterLogin')
+       
         sessionStorage.removeItem('redirectAfterLogin')
-        router.replace(nextPage)
+          if (nextPage) {
+          router.replace(nextPage)
+          return
+        }
+         const roleRedirect = await redirectByRole()
+        router.replace(roleRedirect)
+        
       }
     } catch (error) {
       toast.error('An unexpected error occurred')
