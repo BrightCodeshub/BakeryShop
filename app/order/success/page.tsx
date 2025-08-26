@@ -1,7 +1,8 @@
 'use client'
+export const dynamic = 'force-dynamic'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,24 +26,32 @@ interface Order {
 export default function OrderSuccess() {
   const [order, setOrder] = useState<Order | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
+  const router = useRouter()
   const sessionId = searchParams.get('session_id')
   const supabase = createClient()
 
   useEffect(() => {
-    if (sessionId) {
-      fetchOrderDetails()
+    if (!sessionId) {
+      setError('Missing session ID. Redirecting...')
+      setTimeout(() => router.replace('/order/cart'), 2000)
+      return
     }
-  }, [sessionId])
 
-  const fetchOrderDetails = async () => {
-    try {
-      // In a real app, you'd verify the session_id with Stripe first
-      // For now, we'll get the most recent order for the user
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (user) {
-        const { data: orderData, error } = await supabase
+    const fetchOrderDetails = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+        if (userError || !user) {
+          setError('User not authenticated.')
+          setTimeout(() => router.replace('/auth/signin'), 2000)
+          return
+        }
+
+        // You might want to link orders to sessionId on Stripe for real apps
+        const { data: orderData, error: orderError } = await supabase
           .from('orders')
           .select(`
             *,
@@ -57,15 +66,19 @@ export default function OrderSuccess() {
           .limit(1)
           .single()
 
-        if (error) throw error
+        if (orderError) {
+          setError('Failed to fetch order details.')
+          return
+        }
         setOrder(orderData)
+      } catch (err) {
+        setError('An unexpected error occurred.')
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error('Error fetching order:', error)
-    } finally {
-      setIsLoading(false)
     }
-  }
+    fetchOrderDetails()
+  }, [sessionId, router, supabase])
 
   if (isLoading) {
     return (
@@ -74,6 +87,14 @@ export default function OrderSuccess() {
           <div className="w-16 h-16 bg-gradient-to-br from-rose-400 to-amber-400 rounded-full animate-pulse mx-auto mb-4"></div>
           <p className="text-gray-600">Loading your order details...</p>
         </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-600 text-lg">{error}</p>
       </div>
     )
   }
@@ -106,14 +127,14 @@ export default function OrderSuccess() {
                   </div>
                 ))}
               </div>
-              
+
               <hr className="border-rose-200" />
-              
+
               <div className="flex justify-between text-lg font-bold text-rose-600">
                 <span>Total Paid</span>
                 <span>${order.total.toFixed(2)}</span>
               </div>
-              
+
               <div className="bg-rose-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-gray-800 mb-2">What's Next?</h4>
                 <ul className="text-sm text-gray-600 space-y-1">
@@ -134,7 +155,6 @@ export default function OrderSuccess() {
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>
-          
           <div>
             <Link href="/menu">
               <Button variant="outline" className="border-rose-300 text-rose-700 hover:bg-rose-50">
