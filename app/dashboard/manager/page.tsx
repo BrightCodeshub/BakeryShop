@@ -42,86 +42,83 @@ export default async function ManagerDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 to-amber-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Manager Dashboard</h1>
+        <header className="mb-8">
+          <h1 className="text-3xl font-extrabold text-gray-900 mb-1">Manager Dashboard</h1>
           <p className="text-gray-600">Manage your bakery operations</p>
-        </div>
+        </header>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <ShoppingBag className="w-6 h-6 text-blue-600" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          {[{
+            icon: <ShoppingBag className="w-6 h-6 text-blue-600" />,
+            title: 'Total Orders',
+            value: totalOrders || 0,
+            bg: 'bg-blue-100'
+          }, {
+            icon: <TrendingUp className="w-6 h-6 text-green-600" />,
+            title: "Today's Orders",
+            value: todayOrders || 0,
+            bg: 'bg-green-100'
+          }, {
+            icon: <DollarSign className="w-6 h-6 text-rose-600" />,
+            title: 'Total Revenue',
+            value: `$${totalRevenue.toFixed(2)}`,
+            bg: 'bg-rose-100'
+          }, {
+            icon: <Users className="w-6 h-6 text-amber-600" />,
+            title: 'Total Customers',
+            value: totalCustomers || 0,
+            bg: 'bg-amber-100'
+          }].map(({ icon, title, value, bg }) => (
+            <Card key={title} className="shadow-md hover:shadow-lg transition-shadow">
+              <CardContent className={`flex items-center p-6 ${bg} rounded-lg`}>
+                <div className="p-3 rounded-full bg-white mr-4 flex items-center justify-center">
+                  {icon}
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Total Orders</p>
-                  <p className="text-2xl font-bold text-gray-800">{totalOrders || 0}</p>
+                  <p className="text-gray-600 text-sm">{title}</p>
+                  <p className="text-xl font-semibold text-gray-900">{value}</p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Today's Orders</p>
-                  <p className="text-2xl font-bold text-gray-800">{todayOrders || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-rose-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-800">${totalRevenue.toFixed(2)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
-                  <Users className="w-6 h-6 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Total Customers</p>
-                  <p className="text-2xl font-bold text-gray-800">{totalCustomers || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Management Tabs */}
-        <Tabs defaultValue="orders" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-white">
-            <TabsTrigger value="orders">Order Queue</TabsTrigger>
-            <TabsTrigger value="menu">Menu Management</TabsTrigger>
-            <TabsTrigger value="customers">Customer Invoices</TabsTrigger>
+        <Tabs defaultValue="customers" className="bg-white rounded-lg shadow-md">
+          <TabsList
+            className="grid grid-cols-3 border-b border-gray-200 rounded-t-lg overflow-hidden"
+            aria-label="Manager dashboard navigation tabs"
+          >
+            <TabsTrigger
+              value="orders"
+              className="text-center py-3 font-semibold text-gray-700 hover:bg-gray-50 focus-visible:bg-gray-100 data-[state=active]:bg-rose-100 data-[state=active]:text-rose-700"
+            >
+              Order Queue
+            </TabsTrigger>
+            <TabsTrigger
+              value="menu"
+              className="text-center py-3 font-semibold text-gray-700 hover:bg-gray-50 focus-visible:bg-gray-100 data-[state=active]:bg-rose-100 data-[state=active]:text-rose-700"
+            >
+              Menu Management
+            </TabsTrigger>
+            <TabsTrigger
+              value="customers"
+              className="text-center py-3 font-semibold text-gray-700 hover:bg-gray-50 focus-visible:bg-gray-100 data-[state=active]:bg-rose-100 data-[state=active]:text-rose-700"
+            >
+              Customer Invoices
+            </TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="orders">
+
+          <TabsContent value="orders" className="p-6">
             <OrderQueue />
           </TabsContent>
-          
-          <TabsContent value="menu">
+
+          <TabsContent value="menu" className="p-6">
             <MenuManagement />
           </TabsContent>
-           <TabsContent value="customers">
+
+          <TabsContent value="customers" className="p-6">
             <CustomerInvoiceTable customers={customers || []} />
           </TabsContent>
         </Tabs>
