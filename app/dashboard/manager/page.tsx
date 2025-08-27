@@ -1,14 +1,18 @@
-import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ShoppingBag, Users, DollarSign, TrendingUp } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
+import toast from 'react-hot-toast'
+import CustomerInvoiceTable from '@/components/dashboard/customer-invoices'
 import MenuManagement from '@/components/dashboard/menu-management'
 import OrderQueue from '@/components/dashboard/order-queue'
-import { ShoppingBag, Users, DollarSign, TrendingUp } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { cookies } from 'next/headers'
 import { Roles } from '@/lib/constants'
 import { createServerClient } from '@supabase/ssr'
+
+
 export default async function ManagerDashboard() {
   await requireRole([Roles.Manager])
   
@@ -20,12 +24,14 @@ export default async function ManagerDashboard() {
     { count: totalOrders },
     { count: todayOrders },
     { data: revenueData },
-    { count: totalCustomers }
+    { count: totalCustomers },
+    { data: customers }
   ] = await Promise.all([
     supabase.from('orders').select('*', { count: 'exact', head: true }),
     supabase.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', new Date().toISOString().split('T')[0]),
     supabase.from('orders').select('total,created_at').eq('status', 'completed'),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'customer')
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'customer'),
+    supabase.from('profiles').select('id,full_name,email').eq('role', 'customer')
   ])
 
   const totalRevenue = revenueData?.reduce((sum, order) => sum + order.total, 0) || 0
@@ -105,6 +111,7 @@ export default async function ManagerDashboard() {
           <TabsList className="grid w-full grid-cols-2 bg-white">
             <TabsTrigger value="orders">Order Queue</TabsTrigger>
             <TabsTrigger value="menu">Menu Management</TabsTrigger>
+            <TabsTrigger value="customers">Customer Invoices</TabsTrigger>
           </TabsList>
           
           <TabsContent value="orders">
@@ -113,6 +120,9 @@ export default async function ManagerDashboard() {
           
           <TabsContent value="menu">
             <MenuManagement />
+          </TabsContent>
+           <TabsContent value="customers">
+            <CustomerInvoiceTable customers={customers || []} />
           </TabsContent>
         </Tabs>
       </div>
